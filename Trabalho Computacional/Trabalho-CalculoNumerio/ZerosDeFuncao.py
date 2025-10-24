@@ -1,56 +1,62 @@
 import math as mt
 import sympy as sp
+from colorama import Fore, Style, init
 
-def Bissecao(a: float, b: float, delta: float, n: int, exp_str: str):
+init(autoreset=True)
+
+def print_header(title):
+    print(f"\n{Fore.CYAN + Style.BRIGHT}===== {title} ====={Style.RESET_ALL}")
+
+def print_table_header(headers):
+    print(Fore.YELLOW + "\t".join(headers) + Style.RESET_ALL)
+
+def print_row(row):
+    print("\t".join(map(lambda x: f"{x:.6f}" if isinstance(x, float) else str(x), row)))
+
+# --------------------------------------------------------
+# MÉTODOS NUMÉRICOS
+# --------------------------------------------------------
+
+def Bissecao(a, b, delta, n, exp_str):
     iteracao = []
     count = 0
-    if abs(a-b) < delta:
+    if abs(a - b) < delta:
         return a, count
-    while(abs(a-b) > delta and count < 50):
+    while abs(a - b) > delta and count < 50:
         count += 1
-        meio = (a+b)/2.0
+        meio = (a + b) / 2.0
         fInicio = funcao(a, exp_str)
         fMeio = funcao(meio, exp_str)
-
         iteracao.append((count, a, b, meio, fMeio))
-        if fInicio*fMeio < 0:
+        if fInicio * fMeio < 0:
             b = meio
         else:
             a = meio
-
     return meio, iteracao
 
-def MIL(a: float, delta: float, n: int, exp_str: str, equac_equiv: str):
-    iteracao = []
-    
-    count = 0
 
-    while (count < n):
+def MIL(a, delta, n, exp_str, equac_equiv):
+    iteracao = []
+    count = 0
+    while count < n:
         f = funcao(a, exp_str)
         var = funcao(a, equac_equiv)
-
         iteracao.append((count, a, var, f))
-
-        if(abs(f) < delta or var-a < delta):
+        if abs(f) < delta or abs(var - a) < delta:
             break
         a = var
         count += 1
     return a, iteracao
 
 
-def Newton(a: float, delta: float, n: int, exp_str: str):
+def Newton(a, delta, n, exp_str):
     iter = []
-
-    count = 1
     x = sp.Symbol('x')
     exp = sp.sympify(exp_str)
     exp_deriv = sp.diff(exp, x)
-
     f = sp.lambdify(x, exp, 'math')
     f_linha = sp.lambdify(x, exp_deriv, 'math')
-
     count = 0
-
     while count < n:
         fa = f(a)
         fpa = f_linha(a)
@@ -64,7 +70,8 @@ def Newton(a: float, delta: float, n: int, exp_str: str):
         count += 1
     return a, iter
 
-def Secante(a: float, b: float, delta: float, n: int, exp_str: str):
+
+def Secante(a, b, delta, n, exp_str):
     iteracoes = []
     f = lambda x: funcao(x, exp_str)
     count = 0
@@ -81,7 +88,7 @@ def Secante(a: float, b: float, delta: float, n: int, exp_str: str):
     return a, iteracoes
 
 
-def Regula_falsi(a: float, b: float, delta: float, n: int, exp_str: str):
+def Regula_falsi(a, b, delta, n, exp_str):
     iteracoes = []
     f = lambda x: funcao(x, exp_str)
     fa, fb = f(a), f(b)
@@ -102,29 +109,29 @@ def Regula_falsi(a: float, b: float, delta: float, n: int, exp_str: str):
             count += 1
         except ZeroDivisionError:
             print("Divisao por 0 encontrada")
-        
     return var, iteracoes
 
 
-def funcao(varivel: float, exp_str: str):
+def funcao(variavel, exp_str):
     x = sp.Symbol('x')
-    funcao_str = 0
-    exp_real = sp.sympify(funcao_str)
+    exp_real = sp.sympify(exp_str)
     funcao_real = sp.lambdify(x, exp_real, 'math')
+    return funcao_real(variavel)
 
-    return funcao_real(varivel)
+# --------------------------------------------------------
+# I/O DE ARQUIVOS
+# --------------------------------------------------------
 
-
-def lerArquivos(nomeArquivo: str):
+def lerArquivos(nomeArquivo):
     try:
         with open(nomeArquivo, 'r', encoding='utf-8') as arquivo:
-            conteudo = arquivo.read()
-            return conteudo
+            return arquivo.read().strip()
     except FileNotFoundError:
-        print("ARQUIVO NAO ENCONTRADO")
+        print(Fore.RED + "❌ ARQUIVO NAO ENCONTRADO")
         return ""
 
-def salvar_resultados(nome_saida: str, resultados: dict):
+
+def salvar_resultados(nome_saida, resultados):
     with open(nome_saida, 'w', encoding='utf-8') as f:
         for metodo, dados in resultados.items():
             f.write(f"===== {metodo} =====\n")
@@ -132,28 +139,36 @@ def salvar_resultados(nome_saida: str, resultados: dict):
             for linha in dados[1]:
                 f.write("\t".join(map(str, linha)) + "\n")
             f.write(f"\nRaiz aproximada: {dados[0]}\n\n\n")
-    print(f"Resultados salvos em {nome_saida}")
+    print(Fore.GREEN + f"\n💾 Resultados salvos em {nome_saida}\n")
 
+# PROGRAMA PRINCIPAL
 
 def main():
-    entrada = lerArquivos('entrada.txt')
+    entrada = lerArquivos(r'c:\Users\Windows 10\Documents\Ciência da Computação\4 período\Calc Num\Trabalho Computacional\Trabalho-CalculoNumerio\entrada.txt')
     if not entrada:
         return
-    a, b, delta, n, funcao, equac_equiv = entrada.split(";")
-    a = float(a)
-    b = float(b)
-    delta = float(delta)
-    n = int(n)
 
-    resultados = {}
+    a, b, delta, n, funcao_str, equac_equiv = entrada.split(";")
+    a, b, delta, n = float(a), float(b), float(delta), int(n)
 
-    resultados["Bissecao"] = Bissecao(a, b, delta, n, funcao)
-    resultados["MIL (Ponto Fixo)"] = MIL(a, delta, n, funcao, equac_equiv)
-    resultados["Newton-Raphson"] = Newton(a, delta, n, funcao)
-    resultados["Secante"] = Secante(a, b, delta, n, funcao)
-    resultados["Regula Falsi"] = Regula_falsi(a, b, delta, n, funcao)
+    resultados = {
+        "Bissecao": Bissecao(a, b, delta, n, funcao_str),
+        "MIL (Ponto Fixo)": MIL(a, delta, n, funcao_str, equac_equiv),
+        "Newton-Raphson": Newton(a, delta, n, funcao_str),
+        "Secante": Secante(a, b, delta, n, funcao_str),
+        "Regula Falsi": Regula_falsi(a, b, delta, n, funcao_str)
+    }
+
+    for metodo, dados in resultados.items():
+        print_header(metodo)
+        print_table_header(["Iter", "Valores..."])
+        for linha in dados[1]:
+            print_row(linha)
+        print(f"{Fore.GREEN}→ Raiz aproximada: {dados[0]:.8f}\n")
 
     salvar_resultados("saida.txt", resultados)
+    print(Fore.CYAN + "✅ Execução concluída com sucesso!\n" + Style.RESET_ALL)
+
 
 if __name__ == "__main__":
     main()
